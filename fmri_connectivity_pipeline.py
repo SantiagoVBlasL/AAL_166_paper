@@ -1381,14 +1381,13 @@ def _initialize_aal3_roi_processing_info():
         )
             
     temp_channels = []
-    # Logic for Pearson OMST vs. Fallback
+    # --- permitir ambos canales a la vez ---
     if USE_PEARSON_OMST_CHANNEL and OMST_PYTHON_LOADED and orthogonal_minimum_spanning_tree is not None:
         temp_channels.append(PEARSON_OMST_CHANNEL_NAME_PRIMARY)
-    elif USE_PEARSON_FULL_SIGNED_CHANNEL: # If OMST is not used/loaded, but full Pearson is desired
+
+    if USE_PEARSON_FULL_SIGNED_CHANNEL:
         temp_channels.append(PEARSON_OMST_FALLBACK_NAME)
-        if USE_PEARSON_OMST_CHANNEL and (not OMST_PYTHON_LOADED or orthogonal_minimum_spanning_tree is None):
-            logger.info(f"OMST function from dyconnmap not loaded. Using '{PEARSON_OMST_FALLBACK_NAME}' for the Pearson-based channel.")
-    
+
     # Add other channels if enabled
     if USE_MI_CHANNEL_FOR_THESIS: temp_channels.append("MI_KNN_Symmetric")
     if USE_DFC_ABS_DIFF_MEAN_CHANNEL: temp_channels.append("dFC_AbsDiffMean")
