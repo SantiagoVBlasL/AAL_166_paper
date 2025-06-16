@@ -173,10 +173,34 @@ def visualize_tensor_data(
             calculate_and_print_channel_ranges(tensor, channel_names)
 
         # Seleccionar canales a visualizar
-        if channel_to_show is None or (isinstance(channel_to_show, str) and channel_to_show.lower() == 'all'):
+        if channel_to_show is None or (
+            isinstance(channel_to_show, str) and channel_to_show.lower() == "all"
+        ):
             ch_indices = list(range(len(channel_names)))
         else:
-            ch_indices = [int(channel_to_show)] if isinstance(channel_to_show, (str, int)) and channel_to_show in [str(i) for i in range(len(channel_names))] else []
+            # Permitir un solo canal o una lista/tupla de canales indicados por
+            # nombre o índice. Ignorar entradas no válidas de forma segura.
+            raw_values = (
+                channel_to_show
+                if isinstance(channel_to_show, (list, tuple))
+                else [channel_to_show]
+            )
+
+            ch_indices = []
+            for val in raw_values:
+                idx = None
+                if isinstance(val, int):
+                    idx = val
+                elif isinstance(val, str):
+                    if val.isdigit():
+                        idx = int(val)
+                    elif val in channel_names:
+                        idx = channel_names.index(val)
+                if idx is not None and 0 <= idx < len(channel_names):
+                    ch_indices.append(idx)
+
+            # Eliminar duplicados manteniendo el orden
+            ch_indices = list(dict.fromkeys(ch_indices))
 
 
         # Determinar sujeto o promedio
@@ -193,7 +217,14 @@ def visualize_tensor_data(
                     matrix_to_plot = np.mean(tensor[:, ch_idx, :, :], axis=0)
                     title_subject_part = f"Promedio de {tensor.shape[0]} sujetos"
                 else:
-                    subj_idx = int(subject_id_or_index) if subject_id_or_index.isdigit() else subject_ids.index(subject_id_or_index)
+                    # Permitir especificar el sujeto por índice (int o str) o por ID exacto
+                    if isinstance(subject_id_or_index, (int, np.integer)):
+                        subj_idx = int(subject_id_or_index)
+                    elif isinstance(subject_id_or_index, str) and subject_id_or_index.isdigit():
+                        subj_idx = int(subject_id_or_index)
+                    else:
+                        subj_idx = subject_ids.index(str(subject_id_or_index))
+
                     matrix_to_plot = tensor[subj_idx, ch_idx, :, :]
                     title_subject_part = f"Sujeto: {subject_ids[subj_idx]}"
             else: # Individual
